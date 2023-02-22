@@ -4,3 +4,4 @@ matplotlib=3.6.2
 seaborn=0.12.1
 sklean=1.0.2
 regex=2022.7.9
+fastparquet=2022.11.0
