@@ -18,24 +18,30 @@ df = pd.read_parquet(path, engine='fastparquet')
 
 # Note, requires following order: train, val, test & always input at least train
 def prepare_inputs(encoder_type, *args):
+    encoded_sets = range(0,len(args))
     try:
         ohe = encoder_type
         ohe.fit(args[0])
         encoded_sets = []
         for type_set in args:
             encoded_sets.append(ohe.transform(type_set))
+        # print(encoded_sets)
         return tuple(encoded_sets)
     except:
         print("Please try to input only train, val or test set")
 
-x = None # drop App id
-y = None
+#x = None # drop App id
+#y = None
 
-if x:
+x = df[['Rating Count', 'Maximum Installs', 'Price', 'Free', 'Editors Choice', 'Editors Choice', 'In App Purchases']].values
+y = df['Rating Bin'].values
+
+if x.any():
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=123)
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=123)
     X_train, X_val, X_test = prepare_inputs(sklearn.preprocessing.OneHotEncoder(), x_train, x_val, x_test)
 
+print(X_train)
 # print(prepare_inputs(sklearn.preprocessing.OneHotEncoder(), df))
 
 class Network:
@@ -83,3 +89,5 @@ class Network:
 
     def load_model(self):
         self.model.load(str(self.name + '.h5'))
+
+# optimizer = keras.optimizers.Adam(learning_rate=0.01) # perform grid search for multiple learning rates
