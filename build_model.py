@@ -52,18 +52,21 @@ class Network:
         self.init_model.add(layers.Dense(n_features_output, activation=activation_))
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
 
-    def train(self, train_set, epochs_, verbose_):
+    def train(self, train_set, epochs_, verbose_, checkpoint_path):
         # to implement: tf.keras.callbacks.ModelCheckpoint, this lets you save the model during &
         # after training
 
-        # if not os.path.exists('my_folder'):
-            #os.makedirs('my_folder')
+        # create directory if it does not exist
+        if not os.path.exists('training_logs'):
+            os.makedirs('training_logs')
 
-        #cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
-         #                                        save_weights_only=True,
-          #                                       verbose=1)
-        self.model = self.init_model.fit(x=x_train, y=y_train, epochs=epochs_, verbose=verbose_)
-            #, callbacks=[cp_callback])
+        # callback helps to save model during & after training
+        cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
+                                                 save_weights_only=True,
+                                                 verbose=1)
+        # train the model                                         
+        self.model = self.init_model.fit(x=x_train, y=y_train, epochs=epochs_, verbose=verbose_, 
+            callbacks=[cp_callback])
 
     def test(self, test_set):
         pass
