@@ -5,11 +5,14 @@
 - [20/03/2023]: Repo gemaakt, yay
 
 ## Introductie
-Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps/code).
+Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps/code). 
 
 ## Resultaten
 
 ## Opstarten
+
+**Let op:** Nog niet af, dus kan nog veel veranderen
+
 1. Kloon de repo
 2. Installeer de dependencies:
 ```
