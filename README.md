@@ -8,7 +8,7 @@
 Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps/code). 
 
 ## Resultaten
-<font size=”9”>:trollface:</font>
+:trollface:
 
 ## Opstarten
 
@@ -25,4 +25,4 @@ mkdir data
 ```
 4. Download de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps/code) en de Parquet file (link toevoegen). Voeg deze toe aan de nieuwe data map in de repo.
 
-5. ??? <font size=”5”>:rage3:</font>
+5. ??? :rage3:
