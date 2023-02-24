@@ -24,6 +24,6 @@ pip install -r requirements.txt
 ```
 mkdir data
 ```
-4. Download de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps) en de Parquet file (link toevoegen). Voeg deze toe aan de nieuwe data map in de repo.
+4. Download de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps) en de [Parquet file](https://drive.google.com/drive/folders/1Yus7axpUms3iB6brn6_JRfAFDnkLTGeG). Voeg deze toe aan de nieuwe data map in de repo.
 
 5. ??? :rage3:
