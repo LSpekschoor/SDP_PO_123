@@ -14,3 +14,5 @@ Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de
 pip install -r requirements.txt
 ```
 3. Download de parquet file: . Voeg deze toe aan de data map in de repo.
+
+## Resultaten
