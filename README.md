@@ -1,4 +1,4 @@
-# Voorspellen data Google-Playstore dataset
+# Voorspellen data Google Play Store Apps dataset
 
 ## Nieuws
 - [24/02/2023]: Feature engineering klaar!!
