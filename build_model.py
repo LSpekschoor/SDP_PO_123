@@ -18,8 +18,10 @@ path = os.getcwd() + "/data/Google-Playstore-Modified.parquet"
 df = pd.read_parquet(path, engine='fastparquet')
 
 
-x = df.drop(['Bad App Yo', 'Moderate', 'Superb', 'App Id'], axis=1).values #'Rating Bin'
-y = df[['Bad App Yo', 'Moderate', 'Superb']].values
+# x = df.drop(['Bad App Yo', 'Moderate', 'Superb', 'App Id'], axis=1).values #'Rating Bin'
+# y = df[['Bad App Yo', 'Moderate', 'Superb']].values
+x = df.drop(['Rating Bin', 'App Id'], axis=1).values #'Rating Bin'
+y = df['Rating Bin'].values
 
 if x.any():
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=123)
@@ -33,8 +35,9 @@ scaled_X_test = scaler.transform(x_val)
 
 baseline = False
 if baseline:
-    c = DecisionTreeClassifier().fit(x_train, y_train)
-    # c = LogisticRegression(multi_class='ovr').fit(x_train, y_train)
+
+    # hc = DecisionTreeClassifier().fit(x_train, y_train)
+    c = LogisticRegression(multi_class='ovr').fit(x_train, y_train)
 
     preds = c.predict(x_test)
 
@@ -44,8 +47,8 @@ if baseline:
     cf = pd.DataFrame(metrics.confusion_matrix(y_test, preds), index=['Bad App', 'Alrighty', 'Superb'], 
                     columns=['Bad App', 'Alrighty', 'Superb'])
     plt.figure(figsize=(3,3))
-    sns.heatmap(cf)
-    plt.show()
+    sns.heatmap(cf) #annot=True)
+    # plt.show()
 
 
 
@@ -119,7 +122,7 @@ if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.01) # perform grid search for multiple learning rates
     model = Network(name='Bram')
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', output_activation='softmax', 
-                n_features_input=10, n_features_output=3)
+                n_features_input=10, n_features_output=1)
     model.train(train_set=x_train, train_labels=y_train, epochs_=1, verbose_=1, checkpoint_path=None)
     # model.get_loss()
     model.test(x_val)
