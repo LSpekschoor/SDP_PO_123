@@ -16,7 +16,7 @@ import re
 
 
 baseline = False
-build_NN = False
+build_NN = True
 
 
 class Data:
@@ -95,7 +95,9 @@ class Network:
     def build(self, activation_, optimizer_, loss_, output_activation, n_features_input, n_features_output):
         self.init_model = Sequential()
         self.init_model.add(layers.Dense(n_features_input, activation=activation_))
+        self.init_model.add(layers.Dropout(0.5))
         self.init_model.add(layers.Dense(10, activation=activation_))
+        self.init_model.add(layers.Dropout(0.2))
         self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
 
