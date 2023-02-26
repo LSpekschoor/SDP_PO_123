@@ -16,7 +16,7 @@ import re
 
 
 baseline = True
-build_NN = True
+build_NN = False
 
 
 class Data:
@@ -34,11 +34,15 @@ class Data:
             x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=123)
         return x_train, x_val, x_test, y_train, y_val, y_test
     
-    def scaler(self, scaler_type):
-        scaler = sklearn.preprocessing.scaler_type.fit(x_train)
+    def scaler(self, scaler_type, x_train, x_val, x_test, y_train, y_val, y_test):
+        scaler = scaler_type.fit(x_train)
         x_train_ = scaler.transform(x_train)
         x_val = scaler.transform(x_val)
         x_test = scaler.transform(x_test)
+        y_train = scaler.transform(y_train)
+        y_val = scaler.transform(y_val)
+        y_test = scaler.transform(y_test)
+        return x_train, x_val, x_test, y_train, y_val, y_test
 
 
 class Baseline:
@@ -133,6 +137,8 @@ class Network:
 
 data = Data(drop_variables=['Rating Bin', 'App Id'], target_variable='Rating Bin')
 x_train, x_val, x_test, y_train, y_val, y_test = data.get_data()
+#x_train, x_val, x_test, y_train, y_val, y_test = data.scaler(sklearn.preprocessing.StandardScaler(), x_train, x_val, 
+ #                                                            x_test, y_train, y_val, y_test)
 
 if baseline:
     b = Baseline(LogisticRegression(), 'Classification')
