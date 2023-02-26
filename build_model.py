@@ -14,46 +14,63 @@ from keras import Sequential
 from sklearn.tree import DecisionTreeClassifier
 import re
 
-path = os.getcwd() + "/data/Google-Playstore-Modified.parquet"
-df = pd.read_parquet(path, engine='fastparquet')
+
+baseline = True
+build_NN = True
 
 
-# x = df.drop(['Bad App Yo', 'Moderate', 'Superb', 'App Id'], axis=1).values #'Rating Bin'
-# y = df[['Bad App Yo', 'Moderate', 'Superb']].values
-x = df.drop(['Rating Bin', 'App Id'], axis=1).values #'Rating Bin'
-y = df['Rating Bin'].values
+class Data:
+    def __init__(self, drop_variables, target_variable):
+        self.drop_variables = drop_variables
+        self.target_variable = target_variable
 
-if x.any():
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=123)
-    x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=123)
-
-# print(x_train)
-
-scaler = sklearn.preprocessing.StandardScaler().fit(x_train)
-scaled_X_train = scaler.transform(x_train)
-scaled_X_test = scaler.transform(x_val)
-
-baseline = False
-if baseline:
-
-    # hc = DecisionTreeClassifier().fit(x_train, y_train)
-    c = LogisticRegression(multi_class='ovr').fit(x_train, y_train)
-
-    preds = c.predict(x_test)
-
-    accuracy = metrics.accuracy_score(y_test, preds)
-    print('Accuracy score is {}'.format(accuracy))
-
-    cf = pd.DataFrame(metrics.confusion_matrix(y_test, preds), index=['Bad App', 'Alrighty', 'Superb'], 
-                    columns=['Bad App', 'Alrighty', 'Superb'])
-    plt.figure(figsize=(3,3))
-    sns.heatmap(cf) #annot=True)
-    # plt.show()
+    def get_data(self):
+        path = os.getcwd() + "/data/Google-Playstore-Modified.parquet"
+        df = pd.read_parquet(path, engine='fastparquet')
+        x = df.drop(self.drop_variables, axis=1).values #'Rating Bin'
+        y = df[self.target_variable].values
+        if x.any():
+            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=123)
+            x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=123)
+        return x_train, x_val, x_test, y_train, y_val, y_test
+    
+    def scaler(self, scaler_type):
+        scaler = sklearn.preprocessing.scaler_type.fit(x_train)
+        x_train_ = scaler.transform(x_train)
+        x_val = scaler.transform(x_val)
+        x_test = scaler.transform(x_test)
 
 
+class Baseline:
+    def __init__(self, type_model, problem_type):
+        self.type_model = type_model
+        self.problem_type = problem_type
+        self.model = None
+        self.preds = None
+    
+    def train(self, train_data, train_labels):
+        self.model = self.type_model.fit(train_data, train_labels)
+    
+    def test(self, test_data):
+        self.preds = self.model.predict(test_data)
+    
+    def eval(self, test_labels):
+        if self.problem_type == 'Regression':
+            rmse = metrics.mean_squared_error(y_true=test_labels,y_pred=self.preds,squared=False)
 
-#if not os.path.exists('pred_logs'):
- #           os.makedirs('pred_logs')
+        elif self.problem_type == 'Classification':
+            accuracy = metrics.accuracy_score(test_labels, self.preds)
+            print('Accuracy score is {}'.format(accuracy))
+
+            cf = pd.DataFrame(metrics.confusion_matrix(test_labels, self.preds), index=['Bad App', 'Alrighty', 'Superb'], 
+                            columns=['Bad App', 'Alrighty', 'Superb'])
+            plt.figure(figsize=(3,3))
+            sns.heatmap(cf) #annot=True)
+            plt.show()
+            return accuracy, cf
+        else:
+            return 0
+
 
 class Network:
     def __init__(self, name):
@@ -113,7 +130,16 @@ class Network:
     def load_model(self):
         self.model.load(str(self.name + '.h5'))
 
-build_NN = True
+
+data = Data(drop_variables=['Rating Bin', 'App Id'], target_variable='Rating Bin')
+x_train, x_val, x_test, y_train, y_val, y_test = data.get_data()
+
+if baseline:
+    b = Baseline(LogisticRegression(), 'Classification')
+    b.train(x_train, y_train)
+    b.test(x_val)
+    b.eval(y_val)
+
 if build_NN:
     x_train = np.asarray(x_train).astype(np.float32)
     y_train = np.asarray(y_train).astype(np.float32)
