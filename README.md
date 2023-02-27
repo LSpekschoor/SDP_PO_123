@@ -25,6 +25,9 @@ Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de
 maak een (conda) environment aan speciaal voor dit project.
 In VS Code open je de cloned repo, dit is je workspace. Dan ctrl+shift+p -> 'Python: Create Environment' -> Keuze voor Conda wordt verder aangenomen, maar Venv kan ook -> Als het goed is staat er nu in je repo een .conda folder, dit kun je in VS Code selecteren als kernel/interpreter (.ipynb files en .py files resp.). Het staat dan in de lijst als '.\.conda\python.exe'.
 
+Als VS Code bij het runnen van een .ipynb notebook aangeeft dat de kernel niet geïnstalleerd is en de tooltip werkt niet, gebruik dan deze command in de terminal:
+conda install -c anaconda ipykernel                
+
 Environment maken en selecteren kan ook met terminal commands gedaan worden. Werkt niet (altijd) met powershell, vermoedelijk wanneer anaconda niet aan path is toegevoegd t.t.v. installatie.
 2.2
 ```
