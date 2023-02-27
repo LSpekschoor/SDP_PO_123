@@ -12,10 +12,10 @@ from tensorflow import keras
 from keras import layers
 from keras import Sequential
 from sklearn.tree import DecisionTreeClassifier
-
+from sklearn.ensemble import GradientBoostingClassifier
 
 # Run configuraties
-baseline = True
+baseline = False
 build_NN = True
 save_model = True
 load_model = True
@@ -95,15 +95,19 @@ class Network:
         #self.init_model.add(layers.Dropout(0.5))
         #self.init_model.add(layers.Dense(10, activation=activation_))
         #self.init_model.add(layers.Dropout(0.5))
-        self.init_model.add(layers.Dense(10, activation=activation_))
-        self.init_model.add(layers.Dropout(0.5))
+        # self.init_model.add(layers.Dense(256, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.Dense(16, activation=activation_, kernel_regularizer='l2'))
+        # self.init_model.add(layers.Dropout(0.5))
         self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
 
-    def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, checkpoint_path):
+    def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, batch_size_, checkpoint_path):
         # create directory if it does not exist
-        if not os.path.exists('outputs/training_logs'):
-            os.makedirs('outputs/training_logs')
+        path = 'outputs/' + self.name
+        if not os.path.exists(path):
+            os.makedirs(path + '/training_logs')
+            # os.makedirs(path + '/training_logs')
 
         # callback helps to save model during & after training
         cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
@@ -112,13 +116,13 @@ class Network:
         # train the model
         self.model = self.init_model                                    
         self.model.fit(x=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
-                           validation_data=[val_set, val_labels], callbacks=[cp_callback])
+                           validation_data=[val_set, val_labels], batch_size=batch_size_, callbacks=[cp_callback])
    
     def get_loss(self):
         # plot loss for training & val
         hist = pd.DataFrame(self.model.history.history)
         hist.plot()
-        plt.savefig('outputs/model/' +str(self.name) + '/loss_plot.png')
+        plt.savefig('outputs/' +str(self.name) + '/loss_plot.png')
 
     def test(self, test_set):
         self.predictions=self.model.predict(test_set)
@@ -135,15 +139,15 @@ class Network:
         cf = cf.astype('float') / cf.sum(axis=1)[:, np.newaxis]
         plt.figure(figsize=(10,10))
         sns.heatmap(cf, annot=True, fmt='.2f') #annot=True)
-        plt.savefig('outputs/model/' +str(self.name) + '/confusion_matrix.png')
+        plt.savefig('outputs/' +str(self.name) + '/confusion_matrix.png')
         # plt.show()
         return accuracy 
 
     def save_model(self):
-        self.model.save('outputs/model/' +str(self.name) + '/' + str(self.name + '.h5'))
+        self.model.save('outputs/' +str(self.name) + '/' + str(self.name + '.h5'))
 
     def load_model(self, name_model):
-        self.model = tf.keras.models.load_model('outputs/model/' +str(self.name) + '/' + str(name_model + '.h5'))
+        self.model = tf.keras.models.load_model('outputs/' +str(self.name) + '/' + str(name_model + '.h5'))
 
 
 # data = Data(drop_variables=['Rating Bin', 'App Id'], target_variable='Rating Bin')
@@ -155,7 +159,7 @@ x_train, x_val, x_test, y_train, y_val, y_test = data.get_data()
 x_train, x_val, x_test= data.scaler(sklearn.preprocessing.MinMaxScaler(), x_train, x_val, x_test)
 
 if baseline:
-    baselines = [LogisticRegression(), DecisionTreeClassifier()]
+    baselines = [LogisticRegression(), DecisionTreeClassifier(), GradientBoostingClassifier()]
     for classifier in baselines:
         b = Baseline(classifier, 'Classification')
         b.train(x_train, y_train)
@@ -163,12 +167,12 @@ if baseline:
         b.eval(y_val)
 
 if build_NN:
-    optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
-    model = Network(name='Bram')
+    optimizer = keras.optimizers.Adam(learning_rate=0.005) # perform grid search for multiple learning rates
+    model = Network(name='Harm')
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=10, n_features_output=t_v_len)
     model.train(train_set=x_train, train_labels=y_train, epochs_=1, verbose_=1, val_set=x_val, val_labels=y_val, 
-                checkpoint_path='outputs/training_logs/' + model.name)
+                batch_size_=64, checkpoint_path='outputs/' + model.name +'/training_logs/')
     model.get_loss()
     model.test(x_val)
     ev = model.eval(y_val)
