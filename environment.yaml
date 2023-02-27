@@ -1,0 +1,13 @@
+channels:
+- conda-forge
+
+dependencies:
+- numpy=1.21.5
+- pandas=1.4.4
+- matplotlib=3.6.2
+- seaborn=0.12.1
+- scikit-learn=1.0.2
+- regex=2022.7.9
+- fastparquet=0.5.0
+- python-snappy=0.6.1
+#- fastparquet=2022.11.0
