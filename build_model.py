@@ -27,7 +27,7 @@ class Data:
         self.target_variable = target_variable
 
     def get_data(self):
-        path = os.getcwd() + "/data/Google-Playstore-Modified_w_ohe_y.parquet"
+        path = os.getcwd() + "/data/Google-Playstore-Modified_w_ohe_y_changed.parquet"
         df = pd.read_parquet(path, engine='fastparquet')
         x = np.asarray(df.drop(self.drop_variables, axis=1).values).astype(np.float32) #'Rating Bin'
         y = np.asarray(df[self.target_variable].values).astype(np.float32)
@@ -65,7 +65,11 @@ class Baseline:
         elif self.problem_type == 'Classification':
             test_labels = np.argmax(test_labels,axis=1)
             accuracy = metrics.accuracy_score(test_labels, self.preds)
-            print(f'Accuracy score for {str(self.type_model)} is: {accuracy}%')
+            precision = metrics.precision_score(test_labels, self.preds, average='macro')
+            recall = metrics.recall_score(test_labels, self.preds, average='macro')
+            print(f'Accuracy score is {accuracy}')
+            print(f'Precision score is {precision}')
+            print(f'Recall score is {recall}')
 
             cf = pd.DataFrame(metrics.confusion_matrix(test_labels, self.preds), index=['Bad App', 'Alrighty', 'Superb'], 
                             columns=['Bad App', 'Alrighty', 'Superb'])
@@ -132,7 +136,11 @@ class Network:
     def eval(self, true_labels):
         true_labels = np.argmax(true_labels,axis=1)
         accuracy = metrics.accuracy_score(true_labels, self.predictions)
+        precision = metrics.precision_score(true_labels, self.predictions, average='macro')
+        recall = metrics.recall_score(true_labels, self.predictions, average='macro')
         print(f'Accuracy score is {accuracy}')
+        print(f'Precision score is {precision}')
+        print(f'Recall score is {recall}')
 
         # to create confusion matrix
         cf = pd.DataFrame(metrics.confusion_matrix(true_labels, self.predictions), index=['Bad App', 'Alrighty', 'Superb'], 
@@ -169,10 +177,10 @@ if baseline:
 
 if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
-    model = Network(name='Karel')
+    model = Network(name='Bram')
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=10, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=10, verbose_=1, val_set=x_val, val_labels=y_val, 
+    model.train(train_set=x_train, train_labels=y_train, epochs_=1, verbose_=1, val_set=x_val, val_labels=y_val, 
                 batch_size_=64, checkpoint_path='outputs/' + model.name +'/training_logs/')
     model.get_loss()
     model.test(x_val)
@@ -183,7 +191,4 @@ if build_NN:
 if load_model:
     model = Network(name='Bram')
     model.load_model(name_model='Bram')
-
-
-
     
