@@ -21,20 +21,15 @@ Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de
 1. Kloon de repo :shipit:
 
 2. Installeer de dependencies:
-2.1 Optioneel, maar best practice:
+
 maak een (conda) environment aan speciaal voor dit project.
-In VS Code open je de cloned repo, dit is je workspace. Dan ctrl+shift+p -> 'Python: Create Environment' -> Keuze voor Conda wordt verder aangenomen, maar Venv kan ook -> Als het goed is staat er nu in je repo een .conda folder, dit kun je in VS Code selecteren als kernel/interpreter (.ipynb files en .py files resp.). Het staat dan in de lijst als '.\.conda\python.exe'.
+In VS Code open je de cloned repo, dit is je workspace. Ook open je een nieuwe command prompt (powershell werkt niet standaard, vermoedelijk wanneer je t.t.v. installatie conda niet aan PATH hebt toegevoegd) in terminal.
+Maak de environment in de repo, naam kun je evt. aanpassen in het prefix argument:
+conda env create --file environment.yaml --prefix ./envs/SDP_PO
+activeer:
+conda activate ./envs/SDP_PO
 
-Als VS Code bij het runnen van een .ipynb notebook aangeeft dat de kernel niet geïnstalleerd is en de tooltip werkt niet, gebruik dan deze command in de terminal:
-conda install -c anaconda ipykernel                
-
-Environment maken en selecteren kan ook met terminal commands gedaan worden. Werkt niet (altijd) met powershell, vermoedelijk wanneer anaconda niet aan path is toegevoegd t.t.v. installatie.
-2.2
-```
-Heb je een conda environment gemaakt:
-conda install --file requirements.txt -c conda-forge
-Anders:
-pip install -r requirements.txt
+Notitie: Dit is inmiddels getest op één laptop. Er waren veel problemen met dependencies en het initieren van een jupyter kernel voor de nieuwe environment. Dit is opgelost met een aantal dependencies (nb_conda_kernels, ipykernel, beide zonder versie specificatie). Het kan zijn dat een ander systeem tegen vergelijkbare of nieuwe issues aanloopt.
 ```
 3. Run de volgende command:
 ```
