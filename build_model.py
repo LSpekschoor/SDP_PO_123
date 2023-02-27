@@ -96,8 +96,9 @@ class Network:
         #self.init_model.add(layers.Dense(10, activation=activation_))
         #self.init_model.add(layers.Dropout(0.5))
         # self.init_model.add(layers.Dense(256, activation=activation_, kernel_regularizer='l2'))
-        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
         self.init_model.add(layers.Dense(16, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.Dropout(0.5))
+        self.init_model.add(layers.Dense(8, activation=activation_, kernel_regularizer='l2'))
         # self.init_model.add(layers.Dropout(0.5))
         self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
@@ -167,11 +168,11 @@ if baseline:
         b.eval(y_val)
 
 if build_NN:
-    optimizer = keras.optimizers.Adam(learning_rate=0.005) # perform grid search for multiple learning rates
-    model = Network(name='Harm')
+    optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
+    model = Network(name='Karel')
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=10, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=1, verbose_=1, val_set=x_val, val_labels=y_val, 
+    model.train(train_set=x_train, train_labels=y_train, epochs_=10, verbose_=1, val_set=x_val, val_labels=y_val, 
                 batch_size_=64, checkpoint_path='outputs/' + model.name +'/training_logs/')
     model.get_loss()
     model.test(x_val)
