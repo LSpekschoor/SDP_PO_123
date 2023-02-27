@@ -13,11 +13,11 @@ from keras import layers
 from keras import Sequential
 from sklearn.tree import DecisionTreeClassifier
 
-
+# Run configuraties
 baseline = False
-build_NN = True
-save_model = False
-load_model = False
+build_NN = False
+save_model = True
+load_model = True
 
 
 class Data:
@@ -96,12 +96,12 @@ class Network:
         self.init_model = Sequential()
         self.init_model.add(layers.Dense(n_features_input, activation=activation_))
         #self.init_model.add(layers.Dropout(0.5))
-        #self.init_model.add(layers.Dense(10, activation=activation_))
+        #self.init_model.add(layers.Dense(6, activation=activation_))
         #self.init_model.add(layers.Dropout(0.5))
         #self.init_model.add(layers.Dense(10, activation=activation_))
         #self.init_model.add(layers.Dropout(0.5))
         self.init_model.add(layers.Dense(10, activation=activation_))
-        self.init_model.add(layers.Dropout(0.2))
+        self.init_model.add(layers.Dropout(0.5))
         self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
 
@@ -123,7 +123,7 @@ class Network:
         # plot loss for training & val
         hist = pd.DataFrame(self.model.history.history)
         hist.plot()
-        plt.show()
+        plt.savefig('outputs/model/' +str(self.name) + '/loss_plot.png')
 
     def test(self, test_set):
         self.predictions=self.model.predict(test_set)
@@ -138,17 +138,17 @@ class Network:
         cf = pd.DataFrame(metrics.confusion_matrix(true_labels, self.predictions), index=['Bad App', 'Alrighty', 'Superb'], 
                             columns=['Bad App', 'Alrighty', 'Superb'])
         cf = cf.astype('float') / cf.sum(axis=1)[:, np.newaxis]
-        plt.figure(figsize=(3,3))
+        plt.figure(figsize=(10,10))
         sns.heatmap(cf, annot=True, fmt='.2f') #annot=True)
-        plt.show()
+        plt.savefig('outputs/model/' +str(self.name) + '/confusion_matrix.png')
+        # plt.show()
         return accuracy 
 
     def save_model(self):
-        self.model.save('outputs/model/' + str(self.name + '.h5'))
+        self.model.save('outputs/model/' +str(self.name) + '/' + str(self.name + '.h5'))
 
     def load_model(self, name_model):
-        tf.keras.models.load('outputs/model/' + str(name_model + '.h5'))
-        # self.model = tf.keras.models.load
+        self.model = tf.keras.models.load_model('outputs/model/' +str(self.name) + '/' + str(name_model + '.h5'))
 
 
 # data = Data(drop_variables=['Rating Bin', 'App Id'], target_variable='Rating Bin')
@@ -157,7 +157,7 @@ t_v = ['Bad App Yo', 'Moderate', 'Superb'] # or 'Rating Bin'
 t_v_len = 3
 data = Data(drop_variables=d_v, target_variable=t_v)
 x_train, x_val, x_test, y_train, y_val, y_test = data.get_data()
-x_train, x_val, x_test= data.scaler(sklearn.preprocessing.StandardScaler(), x_train, x_val, x_test)
+x_train, x_val, x_test= data.scaler(sklearn.preprocessing.MinMaxScaler(), x_train, x_val, x_test)
 
 if baseline:
     baselines = [LogisticRegression(), DecisionTreeClassifier()]
@@ -168,11 +168,11 @@ if baseline:
         b.eval(y_val)
 
 if build_NN:
-    optimizer = keras.optimizers.Adam(learning_rate=0.01) # perform grid search for multiple learning rates
+    optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
     model = Network(name='Bram')
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=10, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=2, verbose_=1, val_set=x_val, val_labels=y_val, 
+    model.train(train_set=x_train, train_labels=y_train, epochs_=1, verbose_=1, val_set=x_val, val_labels=y_val, 
                 checkpoint_path='outputs/training_logs/' + model.name)
     model.get_loss()
     model.test(x_val)
@@ -182,7 +182,7 @@ if build_NN:
 
 if load_model:
     model = Network(name='Bram')
-    model.load_model(name_model='Bram.h5')
+    model.load_model(name_model='Bram')
 
 
 
