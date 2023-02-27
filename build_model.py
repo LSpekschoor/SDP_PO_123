@@ -96,10 +96,10 @@ class Network:
         self.init_model = Sequential()
         self.init_model.add(layers.Dense(n_features_input, activation=activation_))
         #self.init_model.add(layers.Dropout(0.5))
-        self.init_model.add(layers.Dense(10, activation=activation_))
-        self.init_model.add(layers.Dropout(0.5))
-        self.init_model.add(layers.Dense(10, activation=activation_))
-        self.init_model.add(layers.Dropout(0.5))
+        #self.init_model.add(layers.Dense(10, activation=activation_))
+        #self.init_model.add(layers.Dropout(0.5))
+        #self.init_model.add(layers.Dense(10, activation=activation_))
+        #self.init_model.add(layers.Dropout(0.5))
         self.init_model.add(layers.Dense(10, activation=activation_))
         self.init_model.add(layers.Dropout(0.2))
         self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
@@ -172,7 +172,7 @@ if build_NN:
     model = Network(name='Bram')
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=10, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=10, verbose_=1, val_set=x_val, val_labels=y_val, 
+    model.train(train_set=x_train, train_labels=y_train, epochs_=2, verbose_=1, val_set=x_val, val_labels=y_val, 
                 checkpoint_path='outputs/training_logs/' + model.name)
     model.get_loss()
     model.test(x_val)
