@@ -13,9 +13,10 @@ from keras import layers
 from keras import Sequential
 from sklearn.tree import DecisionTreeClassifier
 
+
 # Run configuraties
-baseline = False
-build_NN = False
+baseline = True
+build_NN = True
 save_model = True
 load_model = True
 
@@ -28,17 +29,11 @@ class Data:
     def get_data(self):
         path = os.getcwd() + "/data/Google-Playstore-Modified_w_ohe_y.parquet"
         df = pd.read_parquet(path, engine='fastparquet')
-        x = df.drop(self.drop_variables, axis=1).values #'Rating Bin'
-        y = df[self.target_variable].values
+        x = np.asarray(df.drop(self.drop_variables, axis=1).values).astype(np.float32) #'Rating Bin'
+        y = np.asarray(df[self.target_variable].values).astype(np.float32)
         if x.any():
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=123)
             x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=123)
-        x_train = np.asarray(x_train).astype(np.float32)
-        y_train = np.asarray(y_train).astype(np.float32)
-        x_val = np.asarray(x_val).astype(np.float32)
-        y_val = np.asarray(y_val).astype(np.float32)
-        x_test = np.asarray(x_test).astype(np.float32)
-        y_test = np.asarray(y_test).astype(np.float32)
         return x_train, x_val, x_test, y_train, y_val, y_test
     
     def scaler(self, scaler_type, x_train, x_val, x_test):
