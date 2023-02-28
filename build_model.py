@@ -16,9 +16,9 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV
 
 # Run configuraties
-baseline = False
+baseline = True
 build_NN = True
-save_model = False
+save_model = True
 load_model = False
 NN_params = dict(parameter = [0.001])
 
@@ -199,8 +199,8 @@ if build_NN:
 
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=n_input_features, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=1, verbose_=1, val_set=x_val, val_labels=y_val, 
-                batch_size_=64, gridsearch=True, params=NN_params)
+    model.train(train_set=x_train, train_labels=y_train, epochs_=25, verbose_=1, val_set=x_val, val_labels=y_val, 
+                batch_size_=64, gridsearch=False, params=NN_params)
     model.get_loss()
     model.test(x_val)
     ev = model.eval(y_val)
