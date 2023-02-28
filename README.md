@@ -30,7 +30,7 @@ activeer:
 conda activate ./envs/SDP_PO
 
 Notitie: Dit is inmiddels getest op één laptop. Er waren veel problemen met dependencies en het initieren van een jupyter kernel voor de nieuwe environment. Dit is opgelost met een aantal dependencies (nb_conda_kernels, ipykernel, beide zonder versie specificatie). Het kan zijn dat een ander systeem tegen vergelijkbare of nieuwe issues aanloopt.
-```
+
 3. Run de volgende command:
 ```
 mkdir data
