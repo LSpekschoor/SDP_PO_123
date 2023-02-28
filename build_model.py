@@ -13,12 +13,14 @@ from keras import layers
 from keras import Sequential
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import GridSearchCV
 
 # Run configuraties
 baseline = False
-build_NN = False
+build_NN = True
 save_model = True
 load_model = True
+NN_params = dict(parameter = None)
 
 
 class Data:
@@ -102,28 +104,40 @@ class Network:
         # self.init_model.add(layers.Dense(256, activation=activation_, kernel_regularizer='l2'))
         #self.init_model.add(layers.Dense(16, activation=activation_, kernel_regularizer='l2'))
         #self.init_model.add(layers.Dropout(0.5))
-        self.init_model.add(layers.Dense(8, activation=activation_, kernel_regularizer='l2'))
-        
+
+
+        '''self.init_model.add(layers.Dense(8, activation=activation_, kernel_regularizer='l2'))
+        tf.keras.layers.BatchNormalization(axis=-1)
         self.init_model.add(layers.Dense(4, activation=activation_, kernel_regularizer='l2'))
+        tf.keras.layers.BatchNormalization(axis=-1)'''
+
+
+        # self.init_model.add(layers.Dropout(0.2))
         # self.init_model.add(layers.Dropout(0.5))
-        self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
+        # self.init_model.add(layers.Dense(1, activation=activation_, kernel_regularizer='l2'))
+
+
+        # self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
+        self.init_model.add(layers.Flatten())
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
 
-    def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, batch_size_, checkpoint_path):
+    def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, batch_size_, gridsearch, params):
         # create directory if it does not exist
         path = 'outputs/' + self.name
         if not os.path.exists(path):
             os.makedirs(path + '/training_logs')
-            # os.makedirs(path + '/training_logs')
 
-        # callback helps to save model during & after training
-        cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
-                                                    save_weights_only=True,
-                                                    verbose=1)
+        # introduce early
+        cp_callback = tf.keras.callbacks.EarlyStopping(start_from_epoch=5, patience=5)
+
         # train the model
-        self.model = self.init_model                                    
-        self.model.fit(x=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
-                           validation_data=[val_set, val_labels], batch_size=batch_size_, callbacks=[cp_callback])
+        if gridsearch:
+            self.model = self.init_model
+            grid = GridSearchCV(estimator=self.model, param_grid=params, cv=3)
+        else:
+            self.model = self.init_model                                    
+            self.model.fit(x=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
+                            validation_data=[val_set, val_labels], batch_size=batch_size_, callbacks=[cp_callback])
    
     def get_loss(self):
         # plot loss for training & val
@@ -178,11 +192,11 @@ if baseline:
 
 if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
-    model = Network(name='Kahn')
+    model = Network(name='Tristan')
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=10, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=75, verbose_=1, val_set=x_val, val_labels=y_val, 
-                batch_size_=64, checkpoint_path='outputs/' + model.name +'/training_logs/')
+    model.train(train_set=x_train, train_labels=y_train, epochs_=50, verbose_=1, val_set=x_val, val_labels=y_val, 
+                batch_size_=64, gridsearch=False, params=NN_params)
     model.get_loss()
     model.test(x_val)
     ev = model.eval(y_val)
@@ -190,10 +204,10 @@ if build_NN:
         model.save_model()
 
 if load_model:
-    model = Network(name='Kahn')
-    model.load_model(name_model='Kahn')
+    model = Network(name='CleverHans')
+    model.load_model(name_model='CleverHans')
     model.test(x_val)
     model.eval(y_val)
-    model.test(x_test)
-    model.eval(y_test)
+    #model.test(x_test)
+    #model.eval(y_test)
     
