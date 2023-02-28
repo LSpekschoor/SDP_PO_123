@@ -16,7 +16,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 
 # Run configuraties
 baseline = False
-build_NN = True
+build_NN = False
 save_model = True
 load_model = True
 
@@ -151,7 +151,6 @@ class Network:
         plt.figure(figsize=(10,10))
         sns.heatmap(cf, annot=True, fmt='.2f') #annot=True)
         plt.savefig('outputs/' +str(self.name) + '/confusion_matrix.png')
-        # plt.show()
         return accuracy 
 
     def save_model(self):
@@ -179,10 +178,10 @@ if baseline:
 
 if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
-    model = Network(name='Bram')
+    model = Network(name='Kahn')
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=10, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=10, verbose_=1, val_set=x_val, val_labels=y_val, 
+    model.train(train_set=x_train, train_labels=y_train, epochs_=75, verbose_=1, val_set=x_val, val_labels=y_val, 
                 batch_size_=64, checkpoint_path='outputs/' + model.name +'/training_logs/')
     model.get_loss()
     model.test(x_val)
@@ -191,6 +190,10 @@ if build_NN:
         model.save_model()
 
 if load_model:
-    model = Network(name='Bram')
-    model.load_model(name_model='Bram')
+    model = Network(name='Kahn')
+    model.load_model(name_model='Kahn')
+    model.test(x_val)
+    model.eval(y_val)
+    model.test(x_test)
+    model.eval(y_test)
     
