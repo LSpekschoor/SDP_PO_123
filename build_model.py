@@ -18,9 +18,9 @@ from sklearn.model_selection import GridSearchCV
 # Run configuraties
 baseline = False
 build_NN = True
-save_model = True
-load_model = True
-NN_params = dict(parameter = None)
+save_model = False
+load_model = False
+NN_params = dict(parameter = [0.001])
 
 
 class Data:
@@ -29,14 +29,15 @@ class Data:
         self.target_variable = target_variable
 
     def get_data(self):
-        path = os.getcwd() + "/data/Google-Playstore-Modified.parquet"
+        path = os.getcwd() + "/data/Google-Playstore-Modified_Lars.parquet"
         df = pd.read_parquet(path, engine='fastparquet')
-        x = np.asarray(df.drop(self.drop_variables, axis=1).values).astype(np.float32) #'Rating Bin'
+        df_features = df.drop(self.drop_variables, axis=1)
+        x = np.asarray(df_features.values).astype(np.float32) #'Rating Bin'
         y = np.asarray(df[self.target_variable].values).astype(np.float32)
         if x.any():
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=123)
             x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=123)
-        return x_train, x_val, x_test, y_train, y_val, y_test
+        return x_train, x_val, x_test, y_train, y_val, y_test, len(df_features.columns)
     
     def scaler(self, scaler_type, x_train, x_val, x_test):
         scaler = scaler_type.fit(x_train)
@@ -117,8 +118,8 @@ class Network:
         # self.init_model.add(layers.Dense(1, activation=activation_, kernel_regularizer='l2'))
 
 
-        # self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
-        self.init_model.add(layers.Flatten())
+        self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
+        # self.init_model.add(layers.Flatten())
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
 
     def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, batch_size_, gridsearch, params):
@@ -133,7 +134,9 @@ class Network:
         # train the model
         if gridsearch:
             self.model = self.init_model
-            grid = GridSearchCV(estimator=self.model, param_grid=params, cv=3)
+            clf = GridSearchCV(estimator=self.model, scoring='accuracy', param_grid=params, cv=3)
+            clf.fit(X=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
+                            validation_data=[val_set, val_labels], batch_size=batch_size_, callbacks=[cp_callback])
         else:
             self.model = self.init_model                                    
             self.model.fit(x=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
@@ -175,11 +178,11 @@ class Network:
 
 
 # data = Data(drop_variables=['Rating Bin', 'App Id'], target_variable='Rating Bin')
-d_v = ['App Id', 'Bad App Yo', 'Moderate', 'Superb'] # or ['Rating Bin', 'App Id']
+d_v = ['App Id', 'Bad App Yo', 'Moderate', 'Superb','Size Cat', 'App Name'] # or ['Rating Bin', 'App Id']
 t_v = ['Bad App Yo', 'Moderate', 'Superb'] # or 'Rating Bin'
 t_v_len = 3
 data = Data(drop_variables=d_v, target_variable=t_v)
-x_train, x_val, x_test, y_train, y_val, y_test = data.get_data()
+x_train, x_val, x_test, y_train, y_val, y_test, n_input_features = data.get_data()
 x_train, x_val, x_test= data.scaler(sklearn.preprocessing.MinMaxScaler(), x_train, x_val, x_test)
 
 if baseline:
@@ -193,10 +196,11 @@ if baseline:
 if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
     model = Network(name='Tristan')
+
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
-                output_activation='softmax', n_features_input=10, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=50, verbose_=1, val_set=x_val, val_labels=y_val, 
-                batch_size_=64, gridsearch=False, params=NN_params)
+                output_activation='softmax', n_features_input=n_input_features, n_features_output=t_v_len)
+    model.train(train_set=x_train, train_labels=y_train, epochs_=1, verbose_=1, val_set=x_val, val_labels=y_val, 
+                batch_size_=64, gridsearch=True, params=NN_params)
     model.get_loss()
     model.test(x_val)
     ev = model.eval(y_val)
