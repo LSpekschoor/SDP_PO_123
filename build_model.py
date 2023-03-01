@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 import sklearn
 from sklearn import metrics
@@ -13,14 +13,12 @@ from keras import layers
 from keras import Sequential
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import GridSearchCV
 
 # Run configuraties
-baseline = True
+baseline = False
 build_NN = True
 save_model = True
 load_model = False
-NN_params = dict(parameter = [0.001])
 
 
 class Data:
@@ -29,7 +27,7 @@ class Data:
         self.target_variable = target_variable
 
     def get_data(self):
-        path = os.getcwd() + "/data/Google-Playstore-Modified_Lars.parquet"
+        path = os.getcwd() + "/data/Google-Playstore-Modified_L.parquet"
         df = pd.read_parquet(path, engine='fastparquet')
         df_features = df.drop(self.drop_variables, axis=1)
         x = np.asarray(df_features.values).astype(np.float32) #'Rating Bin'
@@ -49,6 +47,7 @@ class Data:
 
 class Baseline:
     def __init__(self, type_model, problem_type):
+        self.name = str(type_model)[:-2]
         self.type_model = type_model
         self.problem_type = problem_type
         self.model = None
@@ -70,15 +69,26 @@ class Baseline:
             accuracy = metrics.accuracy_score(test_labels, self.preds)
             precision = metrics.precision_score(test_labels, self.preds, average='macro')
             recall = metrics.recall_score(test_labels, self.preds, average='macro')
+            print('\n' + self.name)
             print(f'Accuracy score is {accuracy}')
             print(f'Precision score is {precision}')
             print(f'Recall score is {recall}')
 
+
+
             cf = pd.DataFrame(metrics.confusion_matrix(test_labels, self.preds), index=['Bad App', 'Alrighty', 'Superb'], 
                             columns=['Bad App', 'Alrighty', 'Superb'])
-            plt.figure(figsize=(3,3))
-            sns.heatmap(cf, annot=True) #annot=True)
-            plt.show()
+            plt.figure(figsize=(10,10))
+            sns.heatmap(cf, annot=True, fmt='g') #annot=True)
+
+            path = 'outputs/' + self.name
+            if not os.path.exists(path):
+                os.makedirs(path)
+            
+            plt.savefig(path + '/confusion_matrix.png')
+            lines = [f'Accuracy score is {accuracy}', f'Precision score is {precision}', f'Recall score is {recall}']
+            with open(path + '/scores.txt', 'w') as f:
+                f.writelines('\n'.join(lines))
             return accuracy, cf
         else:
             return 0
@@ -102,15 +112,15 @@ class Network:
         #self.init_model.add(layers.Dropout(0.5))
         #self.init_model.add(layers.Dense(10, activation=activation_))
         #self.init_model.add(layers.Dropout(0.5))
-        # self.init_model.add(layers.Dense(256, activation=activation_, kernel_regularizer='l2'))
-        #self.init_model.add(layers.Dense(16, activation=activation_, kernel_regularizer='l2'))
-        #self.init_model.add(layers.Dropout(0.5))
+        self.init_model.add(layers.Dense(128, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.Dropout(0.1))
 
 
         '''self.init_model.add(layers.Dense(8, activation=activation_, kernel_regularizer='l2'))
-        tf.keras.layers.BatchNormalization(axis=-1)
-        self.init_model.add(layers.Dense(4, activation=activation_, kernel_regularizer='l2'))
         tf.keras.layers.BatchNormalization(axis=-1)'''
+        #self.init_model.add(layers.Dense(4, activation=activation_, kernel_regularizer='l2'))
+        #tf.keras.layers.BatchNormalization(axis=-1)
 
 
         # self.init_model.add(layers.Dropout(0.2))
@@ -122,25 +132,18 @@ class Network:
         # self.init_model.add(layers.Flatten())
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
 
-    def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, batch_size_, gridsearch, params):
+    def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, batch_size_):
         # create directory if it does not exist
         path = 'outputs/' + self.name
         if not os.path.exists(path):
-            os.makedirs(path + '/training_logs')
+            os.makedirs(path)
 
-        # introduce early
+        # introduce early stopping
         cp_callback = tf.keras.callbacks.EarlyStopping(start_from_epoch=5, patience=5)
 
-        # train the model
-        if gridsearch:
-            self.model = self.init_model
-            clf = GridSearchCV(estimator=self.model, scoring='accuracy', param_grid=params, cv=3)
-            clf.fit(X=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
-                            validation_data=[val_set, val_labels], batch_size=batch_size_, callbacks=[cp_callback])
-        else:
-            self.model = self.init_model                                    
-            self.model.fit(x=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
-                            validation_data=[val_set, val_labels], batch_size=batch_size_, callbacks=[cp_callback])
+        self.model = self.init_model                                    
+        self.model.fit(x=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
+                        validation_data=[val_set, val_labels], batch_size=batch_size_, callbacks=[cp_callback])
    
     def get_loss(self):
         # plot loss for training & val
@@ -168,6 +171,9 @@ class Network:
         plt.figure(figsize=(10,10))
         sns.heatmap(cf, annot=True, fmt='.2f') #annot=True)
         plt.savefig('outputs/' +str(self.name) + '/confusion_matrix.png')
+        lines = [f'Accuracy score is {accuracy}', f'Precision score is {precision}', f'Recall score is {recall}']
+        with open('outputs/' + str(self.name) + '/scores.txt', 'w') as f:
+            f.writelines('\n'.join(lines))
         return accuracy 
 
     def save_model(self):
@@ -186,7 +192,7 @@ x_train, x_val, x_test, y_train, y_val, y_test, n_input_features = data.get_data
 x_train, x_val, x_test= data.scaler(sklearn.preprocessing.MinMaxScaler(), x_train, x_val, x_test)
 
 if baseline:
-    baselines = [LogisticRegression(), DecisionTreeClassifier()] #, GradientBoostingClassifier()]
+    baselines = [LogisticRegression(), DecisionTreeClassifier(), GradientBoostingClassifier()]
     for classifier in baselines:
         b = Baseline(classifier, 'Classification')
         b.train(x_train, y_train)
@@ -195,12 +201,12 @@ if baseline:
 
 if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
-    model = Network(name='Tristan')
+    model = Network(name='Ian')
 
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=n_input_features, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=25, verbose_=1, val_set=x_val, val_labels=y_val, 
-                batch_size_=64, gridsearch=False, params=NN_params)
+    model.train(train_set=x_train, train_labels=y_train, epochs_=10, verbose_=1, val_set=x_val, val_labels=y_val, 
+                batch_size_=64)
     model.get_loss()
     model.test(x_val)
     ev = model.eval(y_val)
