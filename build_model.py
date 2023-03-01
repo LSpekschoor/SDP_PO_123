@@ -129,7 +129,7 @@ class Network:
         ## 
 
         #self.init_model.add(layers.Dense(4, activation=activation_, kernel_regularizer='l2'))
-        #tf.keras.layers.BatchNormalization(axis=-1)
+        #self.init_model.add(layers.BatchNormalization(axis=-1))
 
 
         # self.init_model.add(layers.Dropout(0.2))
