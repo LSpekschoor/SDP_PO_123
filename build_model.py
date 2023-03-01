@@ -107,18 +107,27 @@ class Network:
     def build(self, activation_, optimizer_, loss_, output_activation, n_features_input, n_features_output):
         self.init_model = Sequential()
         self.init_model.add(layers.Dense(n_features_input, activation=activation_))
-        #self.init_model.add(layers.Dropout(0.5))
-        #self.init_model.add(layers.Dense(6, activation=activation_))
-        #self.init_model.add(layers.Dropout(0.5))
-        #self.init_model.add(layers.Dense(10, activation=activation_))
-        #self.init_model.add(layers.Dropout(0.5))
-        self.init_model.add(layers.Dense(128, activation=activation_, kernel_regularizer='l2'))
+
+        '''## Kahn
         self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.Dense(32, activation=activation_, kernel_regularizer='l2'))
         self.init_model.add(layers.Dropout(0.1))
 
+        ## Ian
+        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.Dense(32, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.Dropout(0.1))'''
 
-        '''self.init_model.add(layers.Dense(8, activation=activation_, kernel_regularizer='l2'))
-        tf.keras.layers.BatchNormalization(axis=-1)'''
+        '''## Bram
+        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.BatchNormalization(axis=-1))
+        self.init_model.add(layers.Dense(32, activation=activation_, kernel_regularizer='l2'))'''
+
+        ## Clever Hans
+        self.init_model.add(layers.Dense(8, activation=activation_, kernel_regularizer='l2'))
+        self.init_model.add(layers.BatchNormalization(axis=-1))
+        ## 
+
         #self.init_model.add(layers.Dense(4, activation=activation_, kernel_regularizer='l2'))
         #tf.keras.layers.BatchNormalization(axis=-1)
 
@@ -201,11 +210,11 @@ if baseline:
 
 if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
-    model = Network(name='Ian')
+    model = Network(name='A')
 
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=n_input_features, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=10, verbose_=1, val_set=x_val, val_labels=y_val, 
+    model.train(train_set=x_train, train_labels=y_train, epochs_=5, verbose_=1, val_set=x_val, val_labels=y_val, 
                 batch_size_=64)
     model.get_loss()
     model.test(x_val)
