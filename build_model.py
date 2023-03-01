@@ -34,7 +34,7 @@ class Data:
         y = np.asarray(df[self.target_variable].values).astype(np.float32)
         if x.any():
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=123)
-            x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.1, random_state=123)
+            x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.11, random_state=123)
         return x_train, x_val, x_test, y_train, y_val, y_test, len(df_features.columns)
     
     def scaler(self, scaler_type, x_train, x_val, x_test):
@@ -54,13 +54,14 @@ class Baseline:
         self.preds = None
     
     def train(self, train_data, train_labels):
+        # np argmax voor de kolom
         train_labels = np.argmax(train_labels,axis=1)
         self.model = self.type_model.fit(train_data, train_labels)
     
     def test(self, test_data):
         self.preds = self.model.predict(test_data)
     
-    def eval(self, test_labels):
+    def eval(self, test_labels, set):
         if self.problem_type == 'Regression':
             rmse = metrics.mean_squared_error(y_true=test_labels,y_pred=self.preds,squared=False)
 
@@ -87,7 +88,7 @@ class Baseline:
             
             plt.savefig(path + '/confusion_matrix.png')
             lines = [f'Accuracy score is {accuracy}', f'Precision score is {precision}', f'Recall score is {recall}']
-            with open(path + '/scores.txt', 'w') as f:
+            with open(path + '/' + set + '_scores.txt', 'w') as f:
                 f.writelines('\n'.join(lines))
             return accuracy, cf
         else:
@@ -105,40 +106,13 @@ class Network:
         pass
 
     def build(self, activation_, optimizer_, loss_, output_activation, n_features_input, n_features_output):
-        self.init_model = Sequential()
-        self.init_model.add(layers.Dense(n_features_input, activation=activation_))
-
-        '''## Kahn
-        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
-        self.init_model.add(layers.Dense(32, activation=activation_, kernel_regularizer='l2'))
-        self.init_model.add(layers.Dropout(0.1))
-
-        ## Ian
-        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
-        self.init_model.add(layers.Dense(32, activation=activation_, kernel_regularizer='l2'))
-        self.init_model.add(layers.Dropout(0.1))'''
-
-        '''## Bram
-        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
-        self.init_model.add(layers.BatchNormalization(axis=-1))
-        self.init_model.add(layers.Dense(32, activation=activation_, kernel_regularizer='l2'))'''
-
         ## Clever Hans
-        self.init_model.add(layers.Dense(8, activation=activation_, kernel_regularizer='l2'))
+        self.init_model = Sequential()
+        self.init_model.add(layers.Dense(n_features_input)) #, activation=activation_))
+        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
         self.init_model.add(layers.BatchNormalization(axis=-1))
-        ## 
-
-        #self.init_model.add(layers.Dense(4, activation=activation_, kernel_regularizer='l2'))
-        #self.init_model.add(layers.BatchNormalization(axis=-1))
-
-
-        # self.init_model.add(layers.Dropout(0.2))
-        # self.init_model.add(layers.Dropout(0.5))
-        # self.init_model.add(layers.Dense(1, activation=activation_, kernel_regularizer='l2'))
-
-
+        self.init_model.add(layers.Dense(16, activation=activation_, kernel_regularizer='l2'))
         self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
-        # self.init_model.add(layers.Flatten())
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
 
     def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, batch_size_):
@@ -148,7 +122,7 @@ class Network:
             os.makedirs(path)
 
         # introduce early stopping
-        cp_callback = tf.keras.callbacks.EarlyStopping(start_from_epoch=5, patience=5)
+        cp_callback = tf.keras.callbacks.EarlyStopping(start_from_epoch=5, patience=5, restore_best_weights=True)
 
         self.model = self.init_model                                    
         self.model.fit(x=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
@@ -164,7 +138,7 @@ class Network:
         self.predictions=self.model.predict(test_set)
         self.predictions = np.argmax(self.predictions,axis=1)
 
-    def eval(self, true_labels):
+    def eval(self, true_labels, set):
         true_labels = np.argmax(true_labels,axis=1)
         accuracy = metrics.accuracy_score(true_labels, self.predictions)
         precision = metrics.precision_score(true_labels, self.predictions, average='macro')
@@ -181,7 +155,7 @@ class Network:
         sns.heatmap(cf, annot=True, fmt='.2f') #annot=True)
         plt.savefig('outputs/' +str(self.name) + '/confusion_matrix.png')
         lines = [f'Accuracy score is {accuracy}', f'Precision score is {precision}', f'Recall score is {recall}']
-        with open('outputs/' + str(self.name) + '/scores.txt', 'w') as f:
+        with open('outputs/' + str(self.name) + '/' + set + '_scores.txt', 'w') as f:
             f.writelines('\n'.join(lines))
         return accuracy 
 
@@ -206,19 +180,23 @@ if baseline:
         b = Baseline(classifier, 'Classification')
         b.train(x_train, y_train)
         b.test(x_val)
-        b.eval(y_val)
+        b.eval(y_val, 'val')
+        b.test(x_test)
+        b.eval(y_test, 'test')
 
 if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
-    model = Network(name='A')
+    model = Network(name='CleverHans')
 
     model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=n_input_features, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=5, verbose_=1, val_set=x_val, val_labels=y_val, 
-                batch_size_=64)
+    model.train(train_set=x_train, train_labels=y_train, epochs_=20, verbose_=1, val_set=x_val, val_labels=y_val, 
+                batch_size_=32)
     model.get_loss()
     model.test(x_val)
-    ev = model.eval(y_val)
+    ev = model.eval(y_val, 'val')
+    model.test(x_test)
+    ev = model.eval(y_test, 'test')
     if save_model:
         model.save_model()
 
