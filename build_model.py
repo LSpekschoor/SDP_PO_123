@@ -7,6 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 import sklearn
 from sklearn import metrics
+# from ann_visualizer.visualize import ann_viz
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
@@ -14,12 +15,13 @@ from keras import Sequential
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 
+
 # Run configuraties
 baseline = False
 build_NN = True
-save_model = True
+save_model = False
 load_model = False
-
+only_vis = True
 
 class Data:
     def __init__(self, drop_variables, target_variable):
@@ -61,7 +63,7 @@ class Baseline:
     def test(self, test_data):
         self.preds = self.model.predict(test_data)
     
-    def eval(self, test_labels, set):
+    def eval(self, test_labels, set, save):
         if self.problem_type == 'Regression':
             rmse = metrics.mean_squared_error(y_true=test_labels,y_pred=self.preds,squared=False)
 
@@ -75,21 +77,21 @@ class Baseline:
             print(f'Precision score is {precision}')
             print(f'Recall score is {recall}')
 
-
-
             cf = pd.DataFrame(metrics.confusion_matrix(test_labels, self.preds), index=['Bad App', 'Alrighty', 'Superb'], 
                             columns=['Bad App', 'Alrighty', 'Superb'])
-            plt.figure(figsize=(10,10))
-            sns.heatmap(cf, annot=True, fmt='g') #annot=True)
-
-            path = 'outputs/' + self.name
-            if not os.path.exists(path):
-                os.makedirs(path)
             
-            plt.savefig(path + '/confusion_matrix.png')
-            lines = [f'Accuracy score is {accuracy}', f'Precision score is {precision}', f'Recall score is {recall}']
-            with open(path + '/' + set + '_scores.txt', 'w') as f:
-                f.writelines('\n'.join(lines))
+            if save:
+                plt.figure(figsize=(10,10))
+                sns.heatmap(cf, annot=True, fmt='g') #annot=True)
+
+                path = 'outputs/' + self.name
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                
+                plt.savefig(path + '/confusion_matrix.png')
+                lines = [f'Accuracy score is {accuracy}', f'Precision score is {precision}', f'Recall score is {recall}']
+                with open(path + '/' + set + '_scores.txt', 'w') as f:
+                    f.writelines('\n'.join(lines))
             return accuracy, cf
         else:
             return 0
@@ -108,12 +110,14 @@ class Network:
     def build(self, activation_, optimizer_, loss_, output_activation, n_features_input, n_features_output):
         ## Clever Hans
         self.init_model = Sequential()
-        self.init_model.add(layers.Dense(n_features_input)) #, activation=activation_))
-        self.init_model.add(layers.Dense(64, activation=activation_, kernel_regularizer='l2'))
-        self.init_model.add(layers.BatchNormalization(axis=-1))
+        # self.init_model.add(layers.Dense(n_features_input, input_shape=(11, ))) #, activation=activation_))
+        self.init_model.add(layers.Dense(128, activation=activation_)) #, input_shape=(11,)))
+        # self.init_model.add(layers.BatchNormalization(axis=-1))
         self.init_model.add(layers.Dense(16, activation=activation_, kernel_regularizer='l2'))
         self.init_model.add(layers.Dense(n_features_output, activation=output_activation))
         self.init_model.compile(optimizer=optimizer_, loss=loss_)
+        a = self.init_model
+        return a
 
     def train(self, train_set, train_labels, epochs_, verbose_, val_set, val_labels, batch_size_):
         # create directory if it does not exist
@@ -123,6 +127,8 @@ class Network:
 
         # introduce early stopping
         cp_callback = tf.keras.callbacks.EarlyStopping(start_from_epoch=5, patience=5, restore_best_weights=True)
+        #logdir="logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S")
+        #cp_callback = keras.callbacks.TensorBoard(log_dir=logdir)
 
         self.model = self.init_model                                    
         self.model.fit(x=train_set, y=train_labels, epochs=epochs_, verbose=verbose_, 
@@ -167,7 +173,7 @@ class Network:
 
 
 # data = Data(drop_variables=['Rating Bin', 'App Id'], target_variable='Rating Bin')
-d_v = ['App Id', 'Bad App Yo', 'Moderate', 'Superb','Size Cat', 'App Name'] # or ['Rating Bin', 'App Id']
+d_v = ['App Id', 'Bad App Yo', 'Moderate', 'Superb','Size Cat', 'App Name'] #, 'log_Maximum Installs', 'Rating'] # or ['Rating Bin', 'App Id', 'log_Maximum Installs']
 t_v = ['Bad App Yo', 'Moderate', 'Superb'] # or 'Rating Bin'
 t_v_len = 3
 data = Data(drop_variables=d_v, target_variable=t_v)
@@ -180,28 +186,32 @@ if baseline:
         b = Baseline(classifier, 'Classification')
         b.train(x_train, y_train)
         b.test(x_val)
-        b.eval(y_val, 'val')
+        b.eval(y_val, 'val', True)
         b.test(x_test)
-        b.eval(y_test, 'test')
+        b.eval(y_test, 'test', True)
 
 if build_NN:
     optimizer = keras.optimizers.Adam(learning_rate=0.001) # perform grid search for multiple learning rates
-    model = Network(name='CleverHans')
+    model = Network(name='CleverHans4')
 
-    model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
+    mod_ = model.build(activation_='relu', optimizer_=optimizer, loss_='categorical_crossentropy', 
                 output_activation='softmax', n_features_input=n_input_features, n_features_output=t_v_len)
-    model.train(train_set=x_train, train_labels=y_train, epochs_=20, verbose_=1, val_set=x_val, val_labels=y_val, 
-                batch_size_=32)
-    model.get_loss()
-    model.test(x_val)
-    ev = model.eval(y_val, 'val')
-    model.test(x_test)
-    ev = model.eval(y_test, 'test')
-    if save_model:
-        model.save_model()
+    if only_vis:
+        # ann_viz(mod_, view=True, filename='construct_model', title='Clever Hans')
+        pass
+    else:
+        model.train(train_set=x_train, train_labels=y_train, epochs_=15, verbose_=1, val_set=x_val, val_labels=y_val, 
+                    batch_size_=64)
+        model.get_loss()
+        model.test(x_val)
+        ev = model.eval(y_val, 'val')
+        model.test(x_test)
+        ev = model.eval(y_test, 'test')
+        if save_model:
+            model.save_model()
 
 if load_model:
-    model = Network(name='CleverHans')
+    model = Network(name='CleverHans10')
     model.load_model(name_model='CleverHans')
     model.test(x_val)
     model.eval(y_val)
