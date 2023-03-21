@@ -10,10 +10,6 @@
 ## Introductie
 Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps). 
 
-## Resultaten
-
-:trollface:
-
 ## Opstarten
 
 **Let op:** Nog niet af, dus kan nog veel veranderen
@@ -37,4 +33,4 @@ mkdir data
 ```
 4. Download de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps) en de [Parquet file](https://drive.google.com/drive/folders/1Yus7axpUms3iB6brn6_JRfAFDnkLTGeG). Voeg deze toe aan de nieuwe data map in de repo.
 
-5. ??? :rage3:
+5. Klaar voor gebruik!
