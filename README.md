@@ -1,11 +1,8 @@
-# Voorspellen data Google Play Store Apps dataset :construction_worker:
+# Voorspellen data Google Play Store Apps dataset
 
 ## Nieuws
 - [24/02/2023]: Feature engineering klaar!!
 - [20/03/2023]: Repo gemaakt, yay
-
-##TODO:
-- Verify environment instantiation. Currently the anaconda way has worked once on the requirements.txt file, but only when commenting out the fastparquet package. Trying to install with fastparquet took long (~10 min) and resulted in dependency conflicts.
 
 ## Introductie
 Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de [Google Play Store Apps dataset](https://www.kaggle.com/datasets/gauthamp10/google-playstore-apps). 
@@ -14,7 +11,7 @@ Data Science opdracht voor Smart Data People. Hier wordt gebruikt gemaakt van de
 
 **Let op:** Nog niet af, dus kan nog veel veranderen
 
-1. Kloon de repo :shipit:
+1. Kloon de repo
 
 2. Installeer de dependencies:
 
